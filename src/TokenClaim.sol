@@ -35,17 +35,14 @@ contract TokenClaim is Ownable {
     error InvalidInput(string _input);
     error InvalidMerkleProof();
     error AlreadyClaimed();
-
-    /*//////////////////////////////////////////////////////////////
-                             MODIFIERS
-    //////////////////////////////////////////////////////////////*/
-
+    
     /*//////////////////////////////////////////////////////////////
                             CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
 
-    constructor(address _token) {
+    constructor(address _initialOwner, address _token, address _treasury) Ownable(_initialOwner) {
         token = IERC20(_token);
+        treasury = _treasury;
     }
 
     /**
@@ -53,7 +50,7 @@ contract TokenClaim is Ownable {
      * @param _merkleRoot The root of the Merkle Tree
      */
     function setMerkleRoot(bytes32 _merkleRoot) external onlyOwner {
-        if (_merkleRoot == bytes32(0)) revert(InvalidInput("_merkleRoot"));
+        if (_merkleRoot == bytes32(0)) revert InvalidInput("_merkleRoot");
 
         merkleRoot = _merkleRoot;
     }
@@ -64,13 +61,13 @@ contract TokenClaim is Ownable {
      * @param _merkleProof Merkle proof to validate the claim
      */
     function claim(uint256 _amount, bytes32[] calldata _merkleProof) external {
-        if (hasClaimed[msg.sender]) revert(AlreadyClaimed());
-        if (_amount == 0) revert(InvalidInput("_amount == 0"));
+        if (hasClaimed[msg.sender]) revert AlreadyClaimed();
+        if (_amount == 0) revert InvalidInput("_amount == 0");
 
         // Verify the Merkle proof
         bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(msg.sender, _amount))));
 
-        if (!MerkleProof.verify(_merkleProof, merkleRoot, leaf)) revert(InvalidMerkleProof());
+        if (!MerkleProof.verify(_merkleProof, merkleRoot, leaf)) revert InvalidMerkleProof();
 
         hasClaimed[msg.sender] = true;
 
@@ -82,9 +79,8 @@ contract TokenClaim is Ownable {
 
     function withdraw(address _to, IERC20 _asset) external onlyOwner {
         uint256 balance = _asset.balanceOf(address(this));
-        if(balance == 0) revert(InvalidInput("no balance"));
+        if (balance == 0) revert InvalidInput("no balance");
 
         _asset.safeTransfer(_to, balance);
     }
-
 }
