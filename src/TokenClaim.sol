@@ -35,7 +35,7 @@ contract TokenClaim is Ownable {
     error InvalidInput(string _input);
     error InvalidMerkleProof();
     error AlreadyClaimed();
-    
+
     /*//////////////////////////////////////////////////////////////
                             CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
