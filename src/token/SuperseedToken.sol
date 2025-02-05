@@ -10,7 +10,7 @@ import { ERC20Votes } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20
 import { Nonces } from "@openzeppelin/contracts/utils/Nonces.sol";
 
 /**
- * @custom security-contact security@superseed.xyz
+ * @custom:security-contact security@superseed.xyz
  * @title Superseed Token
  * @notice The SuperseedToken.sol token used in governance and supporting voting and delegation.
  *         Implements EIP 2612 allowing signed approvals.
