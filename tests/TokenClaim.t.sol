@@ -6,11 +6,18 @@ import { console2 } from "forge-std/src/console2.sol";
 
 import { TokenClaim } from "../src/claim/TokenClaim.sol";
 import { SuperseedToken } from "../src/token/SuperseedToken.sol";
-import { Common } from "./Common.t.sol";
 
-contract TokenClaimTest is Common, Test {
+contract TokenClaimTest is Test {
     TokenClaim public tokenClaim;
-    address public initialOwner = address(0x1);
+    SuperseedToken public superseedToken;
+
+    address public initialOwner = makeAddr("Initial Owner");
+    address public alice = makeAddr("Alice");
+    address public bob = makeAddr("Bob");
+    address public defaultAdmin = makeAddr("Admin");
+    address public minter = makeAddr("Minter");
+    address public treasury = makeAddr("Treasury");
+
 
     function setUp() public {
         superseedToken = new SuperseedToken(defaultAdmin, minter, treasury);
