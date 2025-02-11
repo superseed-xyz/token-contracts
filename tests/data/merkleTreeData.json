@@ -1,0 +1,24 @@
+[
+  {
+    "inputs": [
+      "0xBf0b5A4099F0bf6c8bC4252eBeC548Bae95602Ea",
+      "112751000000000000000000"
+    ],
+    "proof": [
+      "0xcea4170b255563d3af595d2dcc2b83b7a44b74f66767f6e2d7b739db64a66068"
+    ],
+    "root": "0x10c9473b3e65b8a2bcbed2a47203744bc7099e609a9eee68a6037e0cee6b221c",
+    "leaf": "0xd86d36bd89afed8f7e28a043ed51af118e3ef1147dbe684c90f51ae68910f00d"
+  },
+  {
+    "inputs": [
+      "0x4dBa461cA9342F4A6Cf942aBd7eacf8AE259108C",
+      "3567135000000000000000000"
+    ],
+    "proof": [
+      "0xd86d36bd89afed8f7e28a043ed51af118e3ef1147dbe684c90f51ae68910f00d"
+    ],
+    "root": "0x10c9473b3e65b8a2bcbed2a47203744bc7099e609a9eee68a6037e0cee6b221c",
+    "leaf": "0xcea4170b255563d3af595d2dcc2b83b7a44b74f66767f6e2d7b739db64a66068"
+  }
+]
