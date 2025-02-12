@@ -5,7 +5,6 @@ import "forge-std/src/Test.sol";
 import { TokenClaim } from "../src/claim/TokenClaim.sol";
 import { SuperseedToken } from "../src/token/SuperseedToken.sol";
 import { MerkleProof } from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import { Deploy } from "../script/Deploy.s.sol";
 
 contract TokenClaimTest is Test {
     TokenClaim public tokenClaim;
