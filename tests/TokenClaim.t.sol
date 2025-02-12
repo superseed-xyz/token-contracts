@@ -52,17 +52,18 @@ contract TokenClaimTest is Test {
         superseedToken.approve(address(tokenClaim), amountAlice + amountBob);
     }
 
-    function test1_setMerkleRoot() public {
+    function test1_setMerkleRoot() public view {
         assertEq(tokenClaim.merkleRoot(), merkleRoot);
     }
 
-    function test2_claimTokens_success() public {
+    function test2_claimTokens() public {
         vm.prank(alice);
         tokenClaim.claim(amountAlice, proofAlice);
         assertEq(superseedToken.balanceOf(alice), amountAlice);
-    }
 
-    function test3_claimTokens_revertAlreadyClaimed() public {
+        vm.roll(3);
+
+        assert(tokenClaim.hasClaimed(alice));
         vm.prank(alice);
         vm.expectRevert(TokenClaim.AlreadyClaimed.selector);
         tokenClaim.claim(amountAlice, proofAlice);
@@ -81,7 +82,7 @@ contract TokenClaimTest is Test {
         uint256 amount = 0;
 
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(TokenClaim.InvalidInput.selector, amount));
+        vm.expectRevert(abi.encodeWithSelector(TokenClaim.InvalidInput.selector, "_amount == 0"));
         tokenClaim.claim(amount, proofAlice);
     }
 
