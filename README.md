@@ -92,15 +92,6 @@ This is how to install dependencies:
 
 Note that OpenZeppelin Contracts is pre-installed, so you can follow that as an example.
 
-## Writing Tests
-
-To write a new test contract, you start by importing `Test` from `forge-std`, and then you inherit it in your test
-contract. Forge Std comes with a pre-instantiated [cheatcodes](https://book.getfoundry.sh/cheatcodes/) environment
-accessible via the `vm` property. If you would like to view the logs in the terminal output, you can add the `-vvv` flag
-and use [console.log](https://book.getfoundry.sh/faq?highlight=console.log#how-do-i-use-consolelog).
-
-This template comes with an example test contract [Foo.t.sol](./tests/Foo.t.sol)
-
 ## Usage
 
 This is a list of the most frequently needed commands.
