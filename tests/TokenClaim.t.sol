@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
+import "../src/claim/TokenClaim.sol";
+import "../src/token/SuperseedToken.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "forge-std/src/Test.sol";
-import { TokenClaim } from "../src/claim/TokenClaim.sol";
-import { SuperseedToken } from "../src/token/SuperseedToken.sol";
-import { MerkleProof } from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 contract TokenClaimTest is Test {
     TokenClaim public tokenClaim;
@@ -65,10 +66,11 @@ contract TokenClaimTest is Test {
         assert(tokenClaim.hasClaimed(alice));
         vm.prank(alice);
         vm.expectRevert(TokenClaim.AlreadyClaimed.selector);
+
         tokenClaim.claim(amountAlice, proofAlice);
     }
 
-    function test4_claimTokens_invalidMerkleProof() public {
+    function test4_claimTokens_InvalidMerkleProof() public {
         bytes32[] memory invalidProof = new bytes32[](1);
         invalidProof[0] = keccak256(abi.encode(alice, amountAlice + 1));
 
@@ -77,7 +79,7 @@ contract TokenClaimTest is Test {
         tokenClaim.claim(amountAlice, invalidProof);
     }
 
-    function test5_claimTokens_InvalidAmount() public {
+    function test5_claimTokens_InvalidInput() public {
         uint256 amount = 0;
 
         vm.prank(alice);
@@ -85,7 +87,20 @@ contract TokenClaimTest is Test {
         tokenClaim.claim(amount, proofAlice);
     }
 
-    function test6_withdrawTokens() public {
+    function test6_withdraw_OnlyOwner() public {
+        uint256 amount = 3_561_723e18;
+
+        vm.prank(minter);
+        superseedToken.mint(address(charlie), amount);
+        vm.prank(charlie);
+        superseedToken.transfer(address(tokenClaim), amount);
+
+        vm.prank(alice);
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
+        tokenClaim.withdraw(treasury, superseedToken);
+    }
+
+    function test7_withdraw() public {
         uint256 amount = 3_561_723e18;
         uint256 currentTreasuryBalance = superseedToken.balanceOf(treasury);
 
@@ -97,5 +112,20 @@ contract TokenClaimTest is Test {
         vm.prank(initialOwner);
         tokenClaim.withdraw(treasury, superseedToken);
         assertEq(superseedToken.balanceOf(treasury), currentTreasuryBalance + amount);
+    }
+
+    function testFuzz_withdraw(uint208 amount) public {
+        uint256 preTotalSupply = superseedToken.totalSupply();
+        vm.assume(amount > 0);
+        vm.assume(amount < type(uint208).max - preTotalSupply);
+
+        uint256 preBalance = superseedToken.balanceOf(treasury);
+
+        vm.prank(minter);
+        superseedToken.mint(address(tokenClaim), amount);
+
+        vm.prank(initialOwner);
+        tokenClaim.withdraw(treasury, superseedToken);
+        assertEq(superseedToken.balanceOf(treasury), preBalance + amount);
     }
 }
