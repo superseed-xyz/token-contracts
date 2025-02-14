@@ -4,7 +4,6 @@ pragma solidity ^0.8.28;
 import "forge-std/src/Test.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { IERC20Errors } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
 import { SuperseedToken } from "../src/token/SuperseedToken.sol";
 
 contract SuperseedTokenTest is Test {

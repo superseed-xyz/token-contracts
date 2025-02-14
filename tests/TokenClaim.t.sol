@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
-import "../src/claim/TokenClaim.sol";
-import "../src/token/SuperseedToken.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "forge-std/src/Test.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { MerkleProof } from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import { SuperseedToken } from "../src/token/SuperseedToken.sol";
+import { TokenClaim } from "../src/claim/TokenClaim.sol";
 
 contract TokenClaimTest is Test {
     TokenClaim public tokenClaim;
