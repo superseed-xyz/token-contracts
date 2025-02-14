@@ -43,4 +43,5 @@
   optimism = "https://optimism-rpc.publicnode.com"
   polygon = "https://polygon-bor-rpc.publicnode.com"
   sepolia = "https://ethereum-sepolia-rpc.publicnode.com"
-  superseed = "https://mainnet.superseed.xyz"
+  superseed = "https://rpc-superseed-mainnet-0.t.conduit.xyz/${API_KEY_CONDUIT}"
+  superseed_sepolia = "https://rpc-sepolia-superseed-826s35710w.t.conduit.xyz/${API_KEY_CONDUIT}"
