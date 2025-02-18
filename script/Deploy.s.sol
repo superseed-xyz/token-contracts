@@ -20,6 +20,5 @@ contract Deploy is BaseScript {
         token = new SuperseedToken(superAdmin, minter, treasury);
         claim = new TokenClaim(claimOwner, address(token), treasury);
         // set merkle root on TokenClaim contract
-
     }
 }
