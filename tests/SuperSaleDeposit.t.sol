@@ -7,7 +7,7 @@ import { SuperSaleDeposit } from "../src/supersale/SuperSaleDeposit.sol";
 import { ERC20Mock } from "../src/supersale/mocks/ERC20Mock.sol";
 import { IERC20 } from "../src/supersale/dependencies/openzeppelin/token/ERC20/IERC20.sol";
 
-contract AuditTests is Test {
+contract SupersaleDepositTest is Test {
     address public alice = makeAddr("Alice");
     address public bob = makeAddr("Bob");
     address public admin = makeAddr("Admin");

@@ -28,12 +28,12 @@ contract TokenClaimTest is Test {
     bytes32[] public proofBob;
 
     function setUp() public {
-        // Deploy contracts
-        superseedToken = new SuperseedToken(defaultAdmin, minter, treasury);
-        tokenClaim = new TokenClaim(initialOwner, address(superseedToken), treasury);
-
         // Prepare merkle tree
         merkleRoot = 0x10c9473b3e65b8a2bcbed2a47203744bc7099e609a9eee68a6037e0cee6b221c;
+
+        // Deploy contracts
+        superseedToken = new SuperseedToken(defaultAdmin, minter, treasury);
+        tokenClaim = new TokenClaim(initialOwner, address(superseedToken), treasury, merkleRoot);
 
         // 0 -> Alice
         proofAlice.push(0xcea4170b255563d3af595d2dcc2b83b7a44b74f66767f6e2d7b739db64a66068);
