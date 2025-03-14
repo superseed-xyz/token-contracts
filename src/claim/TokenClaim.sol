@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import "@openzeppelin/contracts/access/Ownable2Step.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { MerkleProof } from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
-contract TokenClaim is Ownable2Step {
+contract TokenClaim is Ownable {
     /*//////////////////////////////////////////////////////////////
                             LIBRARIES
     //////////////////////////////////////////////////////////////*/
@@ -40,9 +40,11 @@ contract TokenClaim is Ownable2Step {
                             CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
 
-    constructor(address _initialOwner, address _token, address _treasury) Ownable(_initialOwner) {
+    constructor(address _initialOwner, address _token, address _treasury, bytes32 _merkleRoot) Ownable(_initialOwner) {
         token = IERC20(_token);
         treasury = _treasury;
+
+        _setMerkleRoot(_merkleRoot);
     }
 
     /**
@@ -50,9 +52,7 @@ contract TokenClaim is Ownable2Step {
      * @param _merkleRoot The root of the Merkle Tree
      */
     function setMerkleRoot(bytes32 _merkleRoot) external onlyOwner {
-        if (_merkleRoot == bytes32(0)) revert InvalidInput("_merkleRoot");
-
-        merkleRoot = _merkleRoot;
+        _setMerkleRoot(_merkleRoot);
     }
 
     /**
@@ -82,5 +82,15 @@ contract TokenClaim is Ownable2Step {
         if (balance == 0) revert InvalidInput("no balance");
 
         _asset.safeTransfer(_to, balance);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                            INTERNAL FUNCTIONS
+     //////////////////////////////////////////////////////////////*/
+
+    function _setMerkleRoot(bytes32 _merkleRoot) private {
+        if (_merkleRoot == bytes32(0)) revert InvalidInput("_merkleRoot");
+
+        merkleRoot = _merkleRoot;
     }
 }
