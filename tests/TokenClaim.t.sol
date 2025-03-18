@@ -11,6 +11,9 @@ contract TokenClaimTest is Test {
     TokenClaim public tokenClaim;
     SuperseedToken public superseedToken;
 
+    string public constant TOKEN_NAME = "Superseed";
+    string public constant TOKEN_SYMBOL = "SUPR";
+
     address public initialOwner = makeAddr("Initial Owner");
     address public alice = makeAddr("Alice");
     address public bob = makeAddr("Bob");
@@ -32,7 +35,7 @@ contract TokenClaimTest is Test {
         merkleRoot = 0x10c9473b3e65b8a2bcbed2a47203744bc7099e609a9eee68a6037e0cee6b221c;
 
         // Deploy contracts
-        superseedToken = new SuperseedToken(defaultAdmin, minter, treasury);
+        superseedToken = new SuperseedToken(TOKEN_NAME, TOKEN_SYMBOL, defaultAdmin, minter, treasury);
         tokenClaim = new TokenClaim(initialOwner, address(superseedToken), treasury, merkleRoot);
 
         // 0 -> Alice

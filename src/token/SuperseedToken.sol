@@ -29,17 +29,19 @@ contract SuperseedToken is ERC20, ERC20Burnable, AccessControl, ERC20Permit, ERC
     //////////////////////////////////////////////////////////////////////////*/
 
     constructor(
-        address superAdmin,
-        address minter,
-        address treasury
+        string memory _name,
+        string memory _symbol,
+        address _superAdmin,
+        address _minter,
+        address _treasury
     )
-        ERC20("Superseed", "SUPR")
-        ERC20Permit("Superseed")
+        ERC20(_name, _symbol)
+        ERC20Permit(_name)
     {
-        _mint(treasury, 10_000_000_000e18);
+        _mint(_treasury, 10_000_000_000e18);
 
-        _grantRole(DEFAULT_ADMIN_ROLE, superAdmin);
-        _grantRole(MINTER_ROLE, minter);
+        _grantRole(DEFAULT_ADMIN_ROLE, _superAdmin);
+        _grantRole(MINTER_ROLE, _minter);
     }
 
     /*//////////////////////////////////////////////////////////////////////////

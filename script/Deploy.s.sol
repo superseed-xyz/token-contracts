@@ -45,7 +45,12 @@ contract Deploy is BaseScript {
 
     mapping(address => uint256) public treasuryBalances;
 
-    // --- CONSTANTS ---
+    // ================== CONSTANTS ==================
+    // Token Constants
+    string public constant TOKEN_NAME = "Superseed";
+    string public constant TOKEN_SYMBOL = "SUPR";
+
+    // Claim Constants
     bytes32 public constant CLAIM_MERKLE_ROOT = 0xcca3bb75653f49bf643e84f801ee49cbec017b2bcffe7fdd03b5625c1448e748;
 
     function setUp() public {
@@ -116,7 +121,8 @@ contract Deploy is BaseScript {
         tokenAddr.minter = address(mintManager);
 
         // Deploy SuperseedToken
-        token = new SuperseedToken(tokenAddr.superAdmin, tokenAddr.minter, tokenAddr.tempTreasury);
+        token =
+            new SuperseedToken(TOKEN_NAME, TOKEN_SYMBOL, tokenAddr.superAdmin, tokenAddr.minter, tokenAddr.tempTreasury);
 
         // Split the initial token supply between the treasuries
         token.transfer(treasuries.privateInvestors, treasuryBalances[treasuries.privateInvestors]);

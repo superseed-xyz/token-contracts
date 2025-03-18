@@ -8,6 +8,8 @@ import { SuperseedToken } from "../src/token/SuperseedToken.sol";
 
 contract SuperseedTokenTest is Test {
     SuperseedToken public superseedToken;
+    string public constant TOKEN_NAME = "Superseed";
+    string public constant TOKEN_SYMBOL = "SUPR";
 
     address public alice = makeAddr("Alice");
     address public bob = makeAddr("Bob");
@@ -16,7 +18,7 @@ contract SuperseedTokenTest is Test {
     address public treasury = makeAddr("Treasury");
 
     function setUp() public {
-        superseedToken = new SuperseedToken(defaultAdmin, minter, treasury);
+        superseedToken = new SuperseedToken(TOKEN_NAME, TOKEN_SYMBOL, defaultAdmin, minter, treasury);
     }
 
     function test_initialSupply() public view {
