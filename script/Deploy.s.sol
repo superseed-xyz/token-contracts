@@ -8,13 +8,13 @@ import { TokenClaim } from "../src/claim/TokenClaim.sol";
 
 /// @dev See the Solidity Scripting tutorial: https://book.getfoundry.sh/tutorials/solidity-scripting
 contract Deploy is BaseScript {
-    struct TokenAddr {
+    struct TokenParams {
         address superAdmin;
         address minter;
         address tempTreasury;
     }
 
-    struct ClaimAddr {
+    struct ClaimParams {
         address owner;
         address treasury;
     }
@@ -28,7 +28,7 @@ contract Deploy is BaseScript {
         address contributors;
     }
 
-    struct TokenSupply {
+    struct TokenSupplyDistribution {
         uint256 privateInvestors;
         uint256 superSale;
         uint256 bonusSuperSale;
@@ -38,10 +38,10 @@ contract Deploy is BaseScript {
         uint256 contributors;
     }
 
-    TokenAddr public tokenAddr;
-    ClaimAddr public claimAddr;
+    TokenParams public tokenAddr;
+    ClaimParams public claimAddr;
     Treasuries public treasuries;
-    TokenSupply public tokenSupply;
+    TokenSupplyDistribution public tokenSupply;
 
     mapping(address => uint256) public treasuryBalances;
 
@@ -64,11 +64,11 @@ contract Deploy is BaseScript {
             0xc8254f3e7fF702a3Df7d67B204b7f96Aa5E6818F
         );
 
-        tokenAddr = TokenAddr(
+        tokenAddr = TokenParams(
             0x8A57e541757F20740FeB48AED8481E525c1034BC, address(0), 0x6418A646Ed5D55D41d9aD8d0B662bEb8db84e995
         );
 
-        claimAddr = ClaimAddr(0x676E30CE725f7458CAFe0294f595862C40905929, treasuries.superSale);
+        claimAddr = ClaimParams(0x676E30CE725f7458CAFe0294f595862C40905929, treasuries.superSale);
         // ====================================================
 
         /*
@@ -87,7 +87,7 @@ contract Deploy is BaseScript {
         * Contributors -> 2200000000000000000000000000
         */
 
-        tokenSupply = TokenSupply(
+        tokenSupply = TokenSupplyDistribution(
             491_000_000_000_000_000_000_000_000,
             478_308_223_640_000_000_000_000_000,
             95_661_644_728_000_000_000_000_000,
