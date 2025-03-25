@@ -27,20 +27,27 @@ contract TokenClaim is Ownable {
     //////////////////////////////////////////////////////////////*/
 
     event TokensClaimed(address indexed claimant, uint256 amount);
+    event MerkleRootUpdated(bytes32 prevMerkleRoot, bytes32 newMerkleRoot);
 
     /*//////////////////////////////////////////////////////////////
                                  ERRORS
     //////////////////////////////////////////////////////////////*/
 
-    error InvalidInput(string _input);
-    error InvalidMerkleProof();
+    error ZeroAddress();
     error AlreadyClaimed();
+    error AmountIsZero();
+    error InvalidMerkleProof();
+    error EmptyMerkleRoot();
+    error ZeroBalanceToken(address token);
 
     /*//////////////////////////////////////////////////////////////
                             CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
 
     constructor(address _initialOwner, address _token, address _treasury, bytes32 _merkleRoot) Ownable(_initialOwner) {
+        if (_token == address(0)) revert ZeroAddress();
+        if (_treasury == address(0)) revert ZeroAddress();
+
         token = IERC20(_token);
         treasury = _treasury;
 
@@ -62,7 +69,7 @@ contract TokenClaim is Ownable {
      */
     function claim(uint256 _amount, bytes32[] calldata _merkleProof) external {
         if (hasClaimed[msg.sender]) revert AlreadyClaimed();
-        if (_amount == 0) revert InvalidInput("_amount == 0");
+        if (_amount == 0) revert AmountIsZero();
 
         // Verify the Merkle proof
         bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(msg.sender, _amount))));
@@ -72,14 +79,14 @@ contract TokenClaim is Ownable {
         hasClaimed[msg.sender] = true;
 
         // Transfer tokens to the claimant
-        token.safeTransferFrom(treasury, msg.sender, _amount);
+        token.transferFrom(treasury, msg.sender, _amount);
 
         emit TokensClaimed(msg.sender, _amount);
     }
 
     function withdraw(address _to, IERC20 _asset) external onlyOwner {
         uint256 balance = _asset.balanceOf(address(this));
-        if (balance == 0) revert InvalidInput("no balance");
+        if (balance == 0) revert ZeroBalanceToken(address(_asset));
 
         _asset.safeTransfer(_to, balance);
     }
@@ -89,7 +96,9 @@ contract TokenClaim is Ownable {
      //////////////////////////////////////////////////////////////*/
 
     function _setMerkleRoot(bytes32 _merkleRoot) private {
-        if (_merkleRoot == bytes32(0)) revert InvalidInput("_merkleRoot");
+        if (_merkleRoot == bytes32(0)) revert EmptyMerkleRoot();
+
+        emit MerkleRootUpdated(merkleRoot, _merkleRoot);
 
         merkleRoot = _merkleRoot;
     }

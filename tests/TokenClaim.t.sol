@@ -86,7 +86,7 @@ contract TokenClaimTest is Test {
         uint256 amount = 0;
 
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(TokenClaim.InvalidInput.selector, "_amount == 0"));
+        vm.expectRevert(TokenClaim.AmountIsZero.selector);
         tokenClaim.claim(amount, proofAlice);
     }
 
