@@ -3,8 +3,7 @@
 pragma solidity 0.8.28;
 
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import { ERC20Burnable, ERC20 } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import { ERC20Votes } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import { Nonces } from "@openzeppelin/contracts/utils/Nonces.sol";
@@ -17,10 +16,13 @@ import { Nonces } from "@openzeppelin/contracts/utils/Nonces.sol";
  *         A `MintManager` instance has permission to the `mint` function only, for the purposes of enforcing the token
  *         inflation schedule.
  */
-contract SuperseedToken is ERC20, ERC20Burnable, AccessControl, ERC20Permit, ERC20Votes {
+contract SuperseedToken is ERC20Burnable, ERC20Permit, ERC20Votes, AccessControl {
+
     /*//////////////////////////////////////////////////////////////////////////
                                   CONTRACT STATE
     //////////////////////////////////////////////////////////////////////////*/
+
+    uint256 internal constant TEN_BILLION_TOKENS = 10_000_000_000e18;
 
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
@@ -38,7 +40,10 @@ contract SuperseedToken is ERC20, ERC20Burnable, AccessControl, ERC20Permit, ERC
         ERC20(_name, _symbol)
         ERC20Permit(_name)
     {
-        _mint(_treasury, 10_000_000_000e18);
+        require(_superAdmin != address(0), "_superAdmin == address(0)");
+        require(_minter != address(0), "_minter == address(0)");
+
+        _mint(_treasury, TEN_BILLION_TOKENS);
 
         _grantRole(DEFAULT_ADMIN_ROLE, _superAdmin);
         _grantRole(MINTER_ROLE, _minter);
