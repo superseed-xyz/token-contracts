@@ -17,7 +17,6 @@ import { Nonces } from "@openzeppelin/contracts/utils/Nonces.sol";
  *         inflation schedule.
  */
 contract SuperseedToken is ERC20Burnable, ERC20Permit, ERC20Votes, AccessControl {
-
     /*//////////////////////////////////////////////////////////////////////////
                                   CONTRACT STATE
     //////////////////////////////////////////////////////////////////////////*/
