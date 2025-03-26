@@ -38,8 +38,8 @@ contract Deploy is BaseScript {
         uint256 contributors;
     }
 
-    TokenParams public tokenAddr;
-    ClaimParams public claimAddr;
+    TokenParams public tokenParams;
+    ClaimParams public claimParams;
     Treasuries public treasuries;
     TokenSupplyDistribution public tokenSupply;
 
@@ -64,11 +64,11 @@ contract Deploy is BaseScript {
             0xc8254f3e7fF702a3Df7d67B204b7f96Aa5E6818F
         );
 
-        tokenAddr = TokenParams(
+        tokenParams = TokenParams(
             0x8A57e541757F20740FeB48AED8481E525c1034BC, address(0), 0x6418A646Ed5D55D41d9aD8d0B662bEb8db84e995
         );
 
-        claimAddr = ClaimParams(0x676E30CE725f7458CAFe0294f595862C40905929, treasuries.superSale);
+        claimParams = ClaimParams(0x676E30CE725f7458CAFe0294f595862C40905929, treasuries.superSale);
         // ====================================================
 
         /*
@@ -118,11 +118,11 @@ contract Deploy is BaseScript {
     function run() public broadcast returns (MintManager mintManager, SuperseedToken token, TokenClaim claim) {
         // Deploy MintManager
         mintManager = new MintManager();
-        tokenAddr.minter = address(mintManager);
+        tokenParams.minter = address(mintManager);
 
         // Deploy SuperseedToken
         token =
-            new SuperseedToken(TOKEN_NAME, TOKEN_SYMBOL, tokenAddr.superAdmin, tokenAddr.minter, tokenAddr.tempTreasury);
+            new SuperseedToken(TOKEN_NAME, TOKEN_SYMBOL, tokenParams.superAdmin, tokenParams.minter, tokenParams.tempTreasury);
 
         // Split the initial token supply between the treasuries
         token.transfer(treasuries.privateInvestors, treasuryBalances[treasuries.privateInvestors]);
@@ -132,9 +132,10 @@ contract Deploy is BaseScript {
         token.transfer(treasuries.networkParticipationRewards, treasuryBalances[treasuries.networkParticipationRewards]);
         token.transfer(treasuries.contributors, treasuryBalances[treasuries.contributors]);
 
-        // Approve the TokenClaim contract to spend all tokens in TOKEN_CLAIM_TREASURY
 
         // Deploy TokenClaim
-        claim = new TokenClaim(claimAddr.owner, address(token), claimAddr.treasury, CLAIM_MERKLE_ROOT);
+        claim = new TokenClaim(claimParams.owner, address(token), claimParams.treasury, CLAIM_MERKLE_ROOT);
+
+        // Manually approve the TokenClaim contract to spend all tokens in Supersale Treasury
     }
 }
