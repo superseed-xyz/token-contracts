@@ -1,0 +1,64 @@
+===============================================================
+==================== SUPR DEPLOYMENT SCRIPTS ==================
+===============================================================
+
+
+===============================================
+==================== STAGING ==================
+===============================================
+
+=============
+// 1. Setup
+=============
+
+forge fmt && forge clean && forge build && source .env
+
+=================
+// 2. Simulation
+=================
+
+forge script script/DeployStaging.s.sol --rpc-url superseed -vvvv
+
+=================
+// 3. Stage
+=================
+
+forge script script/DeployStaging.s.sol \
+--private-key $DEPLOYER_PK_STAGING \
+--rpc-url superseed \
+--slow \
+--verify \
+--verifier blockscout \
+--verifier-url https://explorer.superseed.xyz/api/ \
+--broadcast \
+-vvvv
+
+============================================
+==================== PROD ==================
+============================================
+
+=============
+// 1. Setup
+=============
+
+forge fmt && forge clean && forge build && source .env
+
+=================
+// 2. Simulation
+=================
+
+forge script script/DeployProd.s.sol --rpc-url superseed -vvvv
+
+=================
+// 3. Live
+=================
+
+forge script script/DeployProd.s.sol \
+--private-key $DEPLOYER_PK_PROD \
+--rpc-url superseed \
+--slow \
+--verify \
+--verifier blockscout \
+--verifier-url https://explorer.superseed.xyz/api/ \
+--broadcast \
+-vvvv

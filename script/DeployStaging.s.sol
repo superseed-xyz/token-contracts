@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.28 <0.9.0;
 
+import { console } from "forge-std/src/Script.sol";
+
 import { BaseScript } from "./Base.s.sol";
 import { MintManager } from "../src/token/MintManager.sol";
 import { SuperseedToken } from "../src/token/SuperseedToken.sol";
 import { TokenClaim } from "../src/claim/TokenClaim.sol";
 
-/// @dev See the Solidity Scripting tutorial: https://book.getfoundry.sh/tutorials/solidity-scripting
 contract Deploy is BaseScript {
     struct TokenParams {
         address superAdmin;
@@ -47,13 +48,15 @@ contract Deploy is BaseScript {
 
     // ================== CONSTANTS ==================
     // Token Constants
-    string public constant TOKEN_NAME = "Superseed";
-    string public constant TOKEN_SYMBOL = "SUPR";
+    string public constant TOKEN_NAME = "SSTestToken";
+    string public constant TOKEN_SYMBOL = "SST2";
 
     // Claim Constants
-    bytes32 public constant CLAIM_MERKLE_ROOT = 0xcca3bb75653f49bf643e84f801ee49cbec017b2bcffe7fdd03b5625c1448e748;
+    bytes32 public constant CLAIM_MERKLE_ROOT = 0xe99e5bfc8187caa2cdfdda7ddfcb6ab5f310028ebf827f8e7a355d00154ff9b9;
 
     function setUp() public {
+        console.log("msg.sender: %s", msg.sender);
+
         // ==================== TREASURIES ====================
         treasuries = Treasuries(
             0x1E4E5e9D0Bb6E0F9F65e9dE460303D7CC8bF639f,
@@ -64,11 +67,10 @@ contract Deploy is BaseScript {
             0xc8254f3e7fF702a3Df7d67B204b7f96Aa5E6818F
         );
 
-        tokenParams = TokenParams(
-            0x8A57e541757F20740FeB48AED8481E525c1034BC, address(0), 0x6418A646Ed5D55D41d9aD8d0B662bEb8db84e995
-        );
+        tokenParams = TokenParams(0x8A57e541757F20740FeB48AED8481E525c1034BC, address(0), msg.sender);
 
         claimParams = ClaimParams(0x676E30CE725f7458CAFe0294f595862C40905929, treasuries.superSale);
+
         // ====================================================
 
         /*
@@ -121,8 +123,9 @@ contract Deploy is BaseScript {
         tokenParams.minter = address(mintManager);
 
         // Deploy SuperseedToken
-        token =
-            new SuperseedToken(TOKEN_NAME, TOKEN_SYMBOL, tokenParams.superAdmin, tokenParams.minter, tokenParams.tempTreasury);
+        token = new SuperseedToken(
+            TOKEN_NAME, TOKEN_SYMBOL, tokenParams.superAdmin, tokenParams.minter, tokenParams.tempTreasury
+        );
 
         // Split the initial token supply between the treasuries
         token.transfer(treasuries.privateInvestors, treasuryBalances[treasuries.privateInvestors]);
@@ -131,7 +134,6 @@ contract Deploy is BaseScript {
         token.transfer(treasuries.foundationTreasury, treasuryBalances[treasuries.foundationTreasury]);
         token.transfer(treasuries.networkParticipationRewards, treasuryBalances[treasuries.networkParticipationRewards]);
         token.transfer(treasuries.contributors, treasuryBalances[treasuries.contributors]);
-
 
         // Deploy TokenClaim
         claim = new TokenClaim(claimParams.owner, address(token), claimParams.treasury, CLAIM_MERKLE_ROOT);
