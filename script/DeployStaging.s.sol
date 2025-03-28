@@ -55,8 +55,6 @@ contract Deploy is BaseScript {
     bytes32 public constant CLAIM_MERKLE_ROOT = 0xe99e5bfc8187caa2cdfdda7ddfcb6ab5f310028ebf827f8e7a355d00154ff9b9;
 
     function setUp() public {
-        console.log("msg.sender: %s", msg.sender);
-
         // ==================== TREASURIES ====================
         treasuries = Treasuries(
             0x1E4E5e9D0Bb6E0F9F65e9dE460303D7CC8bF639f,
@@ -67,7 +65,7 @@ contract Deploy is BaseScript {
             0xc8254f3e7fF702a3Df7d67B204b7f96Aa5E6818F
         );
 
-        tokenParams = TokenParams(0x8A57e541757F20740FeB48AED8481E525c1034BC, address(0), msg.sender);
+        tokenParams = TokenParams(0x8A57e541757F20740FeB48AED8481E525c1034BC, address(0), broadcaster);
 
         claimParams = ClaimParams(0x676E30CE725f7458CAFe0294f595862C40905929, treasuries.superSale);
 
@@ -118,6 +116,8 @@ contract Deploy is BaseScript {
     }
 
     function run() public broadcast returns (MintManager mintManager, SuperseedToken token, TokenClaim claim) {
+        console.log("broadcaster: %s", broadcaster);
+
         // Deploy MintManager
         mintManager = new MintManager();
         tokenParams.minter = address(mintManager);

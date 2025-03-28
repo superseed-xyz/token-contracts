@@ -11,7 +11,7 @@
 // 1. Setup
 =============
 
-forge fmt && forge clean && forge build && source .env
+cp .staging.env .env && forge fmt && forge clean && forge build && source .env
 
 =================
 // 2. Simulation
@@ -41,7 +41,7 @@ forge script script/DeployStaging.s.sol \
 // 1. Setup
 =============
 
-forge fmt && forge clean && forge build && source .env
+cp .prod.env .env && forge fmt && forge clean && forge build && source .env
 
 =================
 // 2. Simulation
