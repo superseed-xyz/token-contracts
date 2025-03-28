@@ -3,12 +3,12 @@ pragma solidity >=0.8.28 <0.9.0;
 
 import { console } from "forge-std/src/Script.sol";
 
-import { BaseScript } from "./Base.s.sol";
+import { BaseDeployerScript } from "./BaseDeployer.s.sol";
 import { MintManager } from "../src/token/MintManager.sol";
 import { SuperseedToken } from "../src/token/SuperseedToken.sol";
 import { TokenClaim } from "../src/claim/TokenClaim.sol";
 
-contract Deploy is BaseScript {
+contract DeployStaging is BaseDeployerScript {
     struct TokenParams {
         address superAdmin;
         address minter;
@@ -53,6 +53,8 @@ contract Deploy is BaseScript {
 
     // Claim Constants
     bytes32 public constant CLAIM_MERKLE_ROOT = 0xe99e5bfc8187caa2cdfdda7ddfcb6ab5f310028ebf827f8e7a355d00154ff9b9;
+
+    constructor() BaseDeployerScript(Environment.Staging) { }
 
     function setUp() public {
         // ==================== TREASURIES ====================

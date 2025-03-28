@@ -11,20 +11,20 @@
 // 1. Setup
 =============
 
-cp .staging.env .env && forge fmt && forge clean && forge build && source .env
+forge fmt && forge clean && forge build && source .env
 
 =================
 // 2. Simulation
 =================
 
-forge script script/DeployStaging.s.sol --rpc-url superseed -vvvv
+forge script script/DeployStaging.s.sol --private-key $PRIVATE_KEY_STAGING --rpc-url superseed -vvvv
 
 =================
 // 3. Stage
 =================
 
 forge script script/DeployStaging.s.sol \
---private-key $DEPLOYER_PK_STAGING \
+--private-key $PRIVATE_KEY_STAGING \
 --rpc-url superseed \
 --slow \
 --verify \
@@ -41,20 +41,20 @@ forge script script/DeployStaging.s.sol \
 // 1. Setup
 =============
 
-cp .prod.env .env && forge fmt && forge clean && forge build && source .env
+forge fmt && forge clean && forge build && source .env
 
 =================
 // 2. Simulation
 =================
 
-forge script script/DeployProd.s.sol --rpc-url superseed -vvvv
+forge script script/DeployProd.s.sol --private-key $PRIVATE_KEY_PROD --rpc-url superseed -vvvv
 
 =================
 // 3. Live
 =================
 
 forge script script/DeployProd.s.sol \
---private-key $DEPLOYER_PK_PROD \
+--private-key $PRIVATE_KEY_PROD \
 --rpc-url superseed \
 --slow \
 --verify \
