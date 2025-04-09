@@ -1,27 +1,17 @@
-===============================================================
-==================== SUPR DEPLOYMENT SCRIPTS ==================
-===============================================================
+=============================================================== ==================== SUPR DEPLOYMENT SCRIPTS
+================== ===============================================================
 
+# =============================================== ==================== STAGING ==================
 
-===============================================
-==================== STAGING ==================
-===============================================
-
-=============
-// 1. Setup
-=============
+============= // 1. Setup =============
 
 forge fmt && forge clean && forge build && source .env
 
-=================
-// 2. Simulation
-=================
+================= // 2. Simulation =================
 
 forge script script/DeployStaging.s.sol --private-key $PRIVATE_KEY_STAGING --rpc-url superseed -vvvv
 
-=================
-// 3. Stage
-=================
+================= // 3. Stage =================
 
 forge script script/DeployStaging.s.sol \
 --private-key $PRIVATE_KEY_STAGING \
@@ -33,25 +23,17 @@ forge script script/DeployStaging.s.sol \
 --broadcast \
 -vvvv
 
-============================================
-==================== PROD ==================
-============================================
+# ============================================ ==================== PROD ==================
 
-=============
-// 1. Setup
-=============
+============= // 1. Setup =============
 
 forge fmt && forge clean && forge build && source .env
 
-=================
-// 2. Simulation
-=================
+================= // 2. Simulation =================
 
 forge script script/DeployProd.s.sol --private-key $PRIVATE_KEY_PROD --rpc-url superseed -vvvv
 
-=================
-// 3. Live
-=================
+================= // 3. Live =================
 
 forge script script/DeployProd.s.sol \
 --private-key $PRIVATE_KEY_PROD \
@@ -60,5 +42,27 @@ forge script script/DeployProd.s.sol \
 --verify \
 --verifier blockscout \
 --verifier-url https://explorer.superseed.xyz/api/ \
+--broadcast \
+-vvvv
+
+# =============================================== ==================== SEPOLIA ==================
+
+============= // 1. Setup =============
+
+forge fmt && forge clean && forge build && source .env
+
+================= // 2. Simulation =================
+
+forge script script/DeploySepolia.s.sol --private-key $PRIVATE_KEY_STAGING --rpc-url superseed_sepolia --ffi -vvvv
+
+================= // 3. Stage =================
+
+forge script script/DeploySepolia.s.sol \
+--private-key $PRIVATE_KEY_STAGING \
+--rpc-url superseed_sepolia \
+--slow \
+--verify \
+--verifier blockscout \
+--verifier-url https://sepolia-explorer.superseed.xyz/api/ \
 --broadcast \
 -vvvv
