@@ -68,7 +68,8 @@ contract DeployStaging is BaseDeployerScript {
     uint256 public constant MAX_DEPOSIT = 20_000_000e6;
 
     // Claim Constants
-    bytes32 public constant CLAIM_MERKLE_ROOT = 0xf5ad00285c2699e22454e4f95e21c094fa12640b3778577bddc35f4759d8c9e4;
+    bytes32 public constant CLAIM_MERKLE_ROOT = 0x945f4ab7fc36e1f0b1d4b73af672dfbb4cfabcb5d0c896fba7a7e2309789dd6b;
+    bytes32 public constant DEPOSIT_MERKLE_ROOT = 0xf5ad00285c2699e22454e4f95e21c094fa12640b3778577bddc35f4759d8c9e4;
 
     constructor() BaseDeployerScript(Environment.Staging) { }
 
@@ -76,47 +77,12 @@ contract DeployStaging is BaseDeployerScript {
         // ==================== TREASURIES ====================
         treasuries = Treasuries(
             0xe928FFfd98eD3347A0d3a2245b928cFa733C99f2,
-            0xaCF4dBbF9f0464d1dD0801Db3C72D090e2A45e85,
+            admin,
             0xa0673CaC20C7F7f5FD6065BF523ECefA281c0FFc,
             0xc9aD5763255a99631a1c3D7a37E197192e6d3Af3,
             0x4D8f821F8Cd4C963704eA6e8687852D15792459D,
             0xBB0599B3DBe99a43e9646636DE165be06440412f
         );
-
-        tokenParams = TokenParams(admin, address(0), broadcaster);
-
-        claimParams = ClaimParams(admin, treasuries.superSale);
-
-        usdc = new ERC20Mock("USD Circle", "USDC", 6);
-        usdt = new ERC20Mock("USD Tether", "USDT", 6);
-        ssd = new SuperSaleDeposit(
-            admin, admin, admin, admin, IERC20(address(usdc)), IERC20(address(usdt)), CLAIM_MERKLE_ROOT
-        );
-
-        vm.startBroadcast(privateKey);
-
-        ssd.setSaleSchedule(block.timestamp - 2 days, block.timestamp - 1 days, block.timestamp + 30 days);
-        ssd.setSaleParameters(MIN_DEPOSIT, MAX_DEPOSIT);
-        ssd.unpause();
-
-        vm.stopBroadcast();
-        // ====================================================
-
-        /*
-         * ================== TOKEN SUPPLY ==================
-         * Total Supply -> 10000000000000000000000000000
-         * Source verification doc:
-         * https://docs.google.com/spreadsheets/d/1iqJYA2QbasJXXXQWV_YgzNkkicckg5A4MMgIsVj54sE/edit?gid=0#gid=0
-         * =================================================
-         *
-         * Private Investors -> 491000000000000000000000000
-         * Supersale -> 478308223640000000000000000
-         * Bonus Supersale -> 95661644728000000000000000
-         * Ecosystem Fund -> 1800000000000000000000000000
-         * Foundation Treasury -> 3435030131632000000000000000
-         * Network participation rewards -> 1500000000000000000000000000
-         * Contributors -> 2200000000000000000000000000
-         */
 
         tokenSupply = TokenSupplyDistribution(
             491_000_000_000_000_000_000_000_000,
@@ -128,22 +94,23 @@ contract DeployStaging is BaseDeployerScript {
             2_200_000_000_000_000_000_000_000_000
         );
 
-        // 10000000000000000000000000000 => 10_000_000_000e18 => 10 Billion Tokens with 18 decimals
-        assert(
-            10_000_000_000e18
-                == (
-                    tokenSupply.privateInvestors + tokenSupply.superSale + tokenSupply.bonusSuperSale
-                        + tokenSupply.ecosystemFund + tokenSupply.foundationTreasury + tokenSupply.networkParticipationRewards
-                        + tokenSupply.contributors
-                )
+        tokenParams = TokenParams(admin, address(0), broadcaster);
+
+        claimParams = ClaimParams(admin, treasuries.superSale);
+
+        usdc = new ERC20Mock("USD Circle", "USDC", 6);
+        usdt = new ERC20Mock("USD Tether", "USDT", 6);
+        ssd = new SuperSaleDeposit(
+            admin, admin, admin, admin, IERC20(address(usdc)), IERC20(address(usdt)), DEPOSIT_MERKLE_ROOT
         );
 
-        treasuryBalances[treasuries.privateInvestors] = tokenSupply.privateInvestors;
-        treasuryBalances[treasuries.superSale] = tokenSupply.superSale + tokenSupply.bonusSuperSale;
-        treasuryBalances[treasuries.ecosystemFund] = tokenSupply.ecosystemFund;
-        treasuryBalances[treasuries.foundationTreasury] = tokenSupply.foundationTreasury;
-        treasuryBalances[treasuries.networkParticipationRewards] = tokenSupply.networkParticipationRewards;
-        treasuryBalances[treasuries.contributors] = tokenSupply.contributors;
+        vm.startBroadcast(privateKey);
+
+        ssd.setSaleSchedule(block.timestamp - 2 days, block.timestamp - 1 days, block.timestamp + 30 days);
+        ssd.setSaleParameters(MIN_DEPOSIT, MAX_DEPOSIT);
+        ssd.unpause();
+
+        vm.stopBroadcast();
     }
 
     function run() public broadcast returns (MintManager mintManager, SuperseedToken token, TokenClaim claim) {
@@ -190,38 +157,28 @@ contract DeployStaging is BaseDeployerScript {
             vm.startBroadcast(accountFileItems[i].privateKey);
             usdc.approve(address(ssd), type(uint256).max);
             ssd.depositUSDC(MIN_DEPOSIT, accountFileItems[i].proof);
-            uint256 amountDeposited;
-            uint256 purchasedTokens;
-            (amountDeposited, purchasedTokens) = ssd.userDeposits(accountFileItems[i].purchaseAddress);
-            console.log(
-                "Deposit %s, Purchased: %s, Address: %s",
-                amountDeposited,
-                purchasedTokens,
-                accountFileItems[i].purchaseAddress
-            );
             vm.stopBroadcast();
         }
 
+        vm.startBroadcast(privateKey);
+
         // Deploy MintManager
-        mintManager = new MintManager();
-        tokenParams.minter = address(mintManager);
+        // @TODO - use MintManager when ready, for now rollback to admin address
+        // mintManager = new MintManager();
+        // tokenParams.minter = address(mintManager);
+        tokenParams.minter = admin;
 
         // Deploy SuperseedToken
         token = new SuperseedToken(
             TOKEN_NAME, TOKEN_SYMBOL, tokenParams.superAdmin, tokenParams.minter, tokenParams.tempTreasury
         );
 
-        // Split the initial token supply between the treasuries
-        token.transfer(treasuries.privateInvestors, treasuryBalances[treasuries.privateInvestors]);
-        token.transfer(treasuries.superSale, treasuryBalances[treasuries.superSale]);
-        token.transfer(treasuries.ecosystemFund, treasuryBalances[treasuries.ecosystemFund]);
-        token.transfer(treasuries.foundationTreasury, treasuryBalances[treasuries.foundationTreasury]);
-        token.transfer(treasuries.networkParticipationRewards, treasuryBalances[treasuries.networkParticipationRewards]);
-        token.transfer(treasuries.contributors, treasuryBalances[treasuries.contributors]);
-
         // Deploy TokenClaim
         claim = new TokenClaim(claimParams.owner, address(token), claimParams.treasury, CLAIM_MERKLE_ROOT);
 
-        // Manually approve the TokenClaim contract to spend all tokens in Supersale Treasury
+        // Mint and approve
+
+        token.mint(treasuries.superSale, tokenSupply.superSale);
+        token.approve(address(claim), type(uint256).max);
     }
 }
