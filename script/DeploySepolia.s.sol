@@ -98,6 +98,8 @@ contract DeployStaging is BaseDeployerScript {
 
         claimParams = ClaimParams(admin, treasuries.superSale);
 
+        vm.selectFork(vm.createFork(vm.rpcUrl("sepolia")));
+
         usdc = new ERC20Mock("USD Circle", "USDC", 6);
         usdt = new ERC20Mock("USD Tether", "USDT", 6);
         ssd = new SuperSaleDeposit(
@@ -113,7 +115,7 @@ contract DeployStaging is BaseDeployerScript {
         vm.stopBroadcast();
     }
 
-    function run() public broadcast returns (MintManager mintManager, SuperseedToken token, TokenClaim claim) {
+    function run() public broadcast returns (SuperseedToken token, TokenClaim claim) {
         console.log("broadcaster: %s", broadcaster);
 
         string memory root = vm.projectRoot();
@@ -159,6 +161,8 @@ contract DeployStaging is BaseDeployerScript {
             ssd.depositUSDC(MIN_DEPOSIT, accountFileItems[i].proof);
             vm.stopBroadcast();
         }
+
+        vm.selectFork(vm.createFork(vm.rpcUrl("superseed_sepolia")));
 
         vm.startBroadcast(privateKey);
 
