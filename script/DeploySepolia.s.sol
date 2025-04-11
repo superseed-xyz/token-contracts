@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.28 <0.9.0;
 
-import { console, console2, stdJson } from "forge-std/src/Script.sol";
+import { console } from "forge-std/src/Script.sol";
 
 import { BaseDeployerScript } from "./BaseDeployer.s.sol";
 import { MintManager } from "../src/token/MintManager.sol";
 import { SuperseedToken } from "../src/token/SuperseedToken.sol";
 import { TokenClaim } from "../src/claim/TokenClaim.sol";
+import { ERC20Mock } from "../src/supersale/mocks/ERC20Mock.sol";
+import { SuperSaleDeposit } from "../src/supersale/SuperSaleDeposit.sol";
+import { IERC20 } from "../src/supersale/dependencies/openzeppelin/token/ERC20/IERC20.sol";
 
 contract DeployStaging is BaseDeployerScript {
     struct TokenParams {
@@ -39,16 +42,19 @@ contract DeployStaging is BaseDeployerScript {
         uint256 contributors;
     }
 
-    struct AccountFileItem {
-        string purchaseAddress;
-        uint256 purchasedTokens;
+    struct AccountFileItemWithProof {
+        address purchaseAddress;
         bytes32[] proof;
+        uint256 privateKey;
     }
 
     TokenParams public tokenParams;
     ClaimParams public claimParams;
     Treasuries public treasuries;
     TokenSupplyDistribution public tokenSupply;
+    ERC20Mock public usdc;
+    ERC20Mock public usdt;
+    SuperSaleDeposit public ssd;
 
     mapping(address => uint256) public treasuryBalances;
 
@@ -56,9 +62,13 @@ contract DeployStaging is BaseDeployerScript {
     // Token Constants
     string public constant TOKEN_NAME = "SSTestToken";
     string public constant TOKEN_SYMBOL = "SST2";
+    address public admin = 0xFf23CF95Cec5339d4bc3EA9fad4c5eEb585ae2e4;
+    uint256 public adminPrivateKey = vm.envUint("PRIVATE_KEY_STAGING");
+    uint256 public constant MIN_DEPOSIT = 250e6;
+    uint256 public constant MAX_DEPOSIT = 20_000_000e6;
 
     // Claim Constants
-    bytes32 public constant CLAIM_MERKLE_ROOT = 0x512f288ba648bf836aca707c2b59b16722adfc4d27c89c52e3d1ab35d9a776f9;
+    bytes32 public constant CLAIM_MERKLE_ROOT = 0xf5ad00285c2699e22454e4f95e21c094fa12640b3778577bddc35f4759d8c9e4;
 
     constructor() BaseDeployerScript(Environment.Staging) { }
 
@@ -73,10 +83,23 @@ contract DeployStaging is BaseDeployerScript {
             0xBB0599B3DBe99a43e9646636DE165be06440412f
         );
 
-        tokenParams = TokenParams(0xFf23CF95Cec5339d4bc3EA9fad4c5eEb585ae2e4, address(0), broadcaster);
+        tokenParams = TokenParams(admin, address(0), broadcaster);
 
-        claimParams = ClaimParams(0xFf23CF95Cec5339d4bc3EA9fad4c5eEb585ae2e4, treasuries.superSale);
+        claimParams = ClaimParams(admin, treasuries.superSale);
 
+        usdc = new ERC20Mock("USD Circle", "USDC", 6);
+        usdt = new ERC20Mock("USD Tether", "USDT", 6);
+        ssd = new SuperSaleDeposit(
+            admin, admin, admin, admin, IERC20(address(usdc)), IERC20(address(usdt)), CLAIM_MERKLE_ROOT
+        );
+
+        vm.startBroadcast(privateKey);
+
+        ssd.setSaleSchedule(block.timestamp - 2 days, block.timestamp - 1 days, block.timestamp + 30 days);
+        ssd.setSaleParameters(MIN_DEPOSIT, MAX_DEPOSIT);
+        ssd.unpause();
+
+        vm.stopBroadcast();
         // ====================================================
 
         /*
@@ -130,13 +153,53 @@ contract DeployStaging is BaseDeployerScript {
         string memory path = string.concat(root, "/script/accounts.json");
 
         string memory json = vm.readFile(path);
-        bytes memory data = vm.parseJson(json);
-        AccountFileItem[] memory accountFileItems = abi.decode(data, (AccountFileItem[]));
+        address[] memory addresses = abi.decode(vm.parseJson(json), (address[]));
+        uint256 itemCount = addresses.length; // Number of items in the JSON array
 
+        AccountFileItemWithProof[] memory accountFileItems = new AccountFileItemWithProof[](itemCount);
+
+        // Parse the JSON file
         for (uint256 i = 0; i < accountFileItems.length; i++) {
-            // AccountFileItem memory item = accountFileItems[i];
+            for (uint256 j = 0; j < itemCount; j++) {
+                string memory basePath = string.concat("[", vm.toString(i), "]");
+                string memory addressPath = string.concat(basePath, ".purchaseAddress");
+                string memory proofPath = string.concat(basePath, ".proof");
+                string memory keyPath = string.concat(basePath, ".privateKey");
 
-            // console.log("Address %s", item.purchaseAddress);
+                address purchaseAddress = abi.decode(vm.parseJson(json, addressPath), (address));
+                bytes32[] memory proof = vm.parseJsonBytes32Array(json, proofPath);
+                uint256 userPrivateKey = vm.parseJsonUint(json, keyPath);
+
+                accountFileItems[i] = AccountFileItemWithProof({
+                    privateKey: userPrivateKey,
+                    proof: proof,
+                    purchaseAddress: purchaseAddress
+                });
+            }
+        }
+
+        // Mint tokens to user
+        for (uint256 i = 0; i < accountFileItems.length; i++) {
+            usdc.mint(accountFileItems[i].purchaseAddress, MAX_DEPOSIT);
+        }
+        vm.stopBroadcast();
+
+        // Approve the SuperSaleDeposit contract to spend all tokens and transfer USDC to the contract
+        for (uint256 i = 0; i < accountFileItems.length; i++) {
+            // User approve spending of tokens by SD
+            vm.startBroadcast(accountFileItems[i].privateKey);
+            usdc.approve(address(ssd), type(uint256).max);
+            ssd.depositUSDC(MIN_DEPOSIT, accountFileItems[i].proof);
+            uint256 amountDeposited;
+            uint256 purchasedTokens;
+            (amountDeposited, purchasedTokens) = ssd.userDeposits(accountFileItems[i].purchaseAddress);
+            console.log(
+                "Deposit %s, Purchased: %s, Address: %s",
+                amountDeposited,
+                purchasedTokens,
+                accountFileItems[i].purchaseAddress
+            );
+            vm.stopBroadcast();
         }
 
         // Deploy MintManager
