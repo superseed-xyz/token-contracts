@@ -53,16 +53,12 @@ forge fmt && forge clean && forge build && source .env
 
 ================= // 2. Simulation =================
 
-forge script script/DeploySepolia.s.sol --private-key $PRIVATE_KEY_STAGING --rpc-url superseed_sepolia --ffi -vvvv
+forge script script/DeploySepolia.s.sol --private-key $PRIVATE_KEY_STAGING --ffi -vvvv
 
 ================= // 3. Stage =================
 
 forge script script/DeploySepolia.s.sol \
 --private-key $PRIVATE_KEY_STAGING \
---rpc-url superseed_sepolia \
 --slow \
---verify \
---verifier blockscout \
---verifier-url https://sepolia-explorer.superseed.xyz/api/ \
 --broadcast \
 -vvvv

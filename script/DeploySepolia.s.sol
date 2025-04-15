@@ -4,7 +4,6 @@ pragma solidity >=0.8.28 <0.9.0;
 import { console } from "forge-std/src/Script.sol";
 
 import { BaseDeployerScript } from "./BaseDeployer.s.sol";
-import { MintManager } from "../src/token/MintManager.sol";
 import { SuperseedToken } from "../src/token/SuperseedToken.sol";
 import { TokenClaim } from "../src/claim/TokenClaim.sol";
 import { ERC20Mock } from "../src/supersale/mocks/ERC20Mock.sol";
@@ -68,12 +67,16 @@ contract DeployStaging is BaseDeployerScript {
     uint256 public constant MAX_DEPOSIT = 20_000_000e6;
 
     // Claim Constants
-    bytes32 public constant CLAIM_MERKLE_ROOT = 0x945f4ab7fc36e1f0b1d4b73af672dfbb4cfabcb5d0c896fba7a7e2309789dd6b;
+    bytes32 public constant CLAIM_MERKLE_ROOT = 0x0dd2dd8116b44e0e2011caeef2f55f49049b65d0ee42b0f1822d25a8ebbe27e2;
     bytes32 public constant DEPOSIT_MERKLE_ROOT = 0xf5ad00285c2699e22454e4f95e21c094fa12640b3778577bddc35f4759d8c9e4;
 
     constructor() BaseDeployerScript(Environment.Staging) { }
 
-    function setUp() public {
+    function run() public broadcast returns (SuperseedToken token, TokenClaim claim) {
+        vm.stopBroadcast();
+        vm.selectFork(vm.createFork(vm.rpcUrl("sepolia")));
+        vm.startBroadcast(privateKey);
+
         // ==================== TREASURIES ====================
         treasuries = Treasuries(
             0xe928FFfd98eD3347A0d3a2245b928cFa733C99f2,
@@ -98,26 +101,23 @@ contract DeployStaging is BaseDeployerScript {
 
         claimParams = ClaimParams(admin, treasuries.superSale);
 
-        vm.selectFork(vm.createFork(vm.rpcUrl("sepolia")));
-
+        // ==================== ERC20 Mocks ====================
         usdc = new ERC20Mock("USD Circle", "USDC", 6);
+        console.log("USDC address: %s", address(usdc));
         usdt = new ERC20Mock("USD Tether", "USDT", 6);
+        console.log("USDT address: %s", address(usdt));
+
+        // ==================== Supersale Deposit ====================
         ssd = new SuperSaleDeposit(
             admin, admin, admin, admin, IERC20(address(usdc)), IERC20(address(usdt)), DEPOSIT_MERKLE_ROOT
         );
-
-        vm.startBroadcast(privateKey);
+        console.log("SuperSaleDeposit address: %s", address(ssd));
 
         ssd.setSaleSchedule(block.timestamp - 2 days, block.timestamp - 1 days, block.timestamp + 30 days);
         ssd.setSaleParameters(MIN_DEPOSIT, MAX_DEPOSIT);
         ssd.unpause();
 
-        vm.stopBroadcast();
-    }
-
-    function run() public broadcast returns (SuperseedToken token, TokenClaim claim) {
-        console.log("broadcaster: %s", broadcaster);
-
+        // ==================== Read Accounts from file ====================
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/script/accounts.json");
 
@@ -127,7 +127,6 @@ contract DeployStaging is BaseDeployerScript {
 
         AccountFileItemWithProof[] memory accountFileItems = new AccountFileItemWithProof[](itemCount);
 
-        // Parse the JSON file
         for (uint256 i = 0; i < accountFileItems.length; i++) {
             for (uint256 j = 0; j < itemCount; j++) {
                 string memory basePath = string.concat("[", vm.toString(i), "]");
@@ -147,16 +146,17 @@ contract DeployStaging is BaseDeployerScript {
             }
         }
 
-        // Mint tokens to user
+        // ==================== Mint tokens to accounts ====================
         for (uint256 i = 0; i < accountFileItems.length; i++) {
             usdc.mint(accountFileItems[i].purchaseAddress, MAX_DEPOSIT);
         }
         vm.stopBroadcast();
 
-        // Approve the SuperSaleDeposit contract to spend all tokens and transfer USDC to the contract
+        // ==================== Deposit from user accounts ====================
         for (uint256 i = 0; i < accountFileItems.length; i++) {
             // User approve spending of tokens by SD
             vm.startBroadcast(accountFileItems[i].privateKey);
+            // @TODO Send ETH to this addresses
             usdc.approve(address(ssd), type(uint256).max);
             ssd.depositUSDC(MIN_DEPOSIT, accountFileItems[i].proof);
             vm.stopBroadcast();
@@ -181,7 +181,6 @@ contract DeployStaging is BaseDeployerScript {
         claim = new TokenClaim(claimParams.owner, address(token), claimParams.treasury, CLAIM_MERKLE_ROOT);
 
         // Mint and approve
-
         token.mint(treasuries.superSale, tokenSupply.superSale);
         token.approve(address(claim), type(uint256).max);
     }
