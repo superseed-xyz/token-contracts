@@ -9,11 +9,10 @@ import { CharacterClaim } from "../src/claim/CharacterClaim.sol";
 contract Deploy is Script {
     function run() public {
         address admin = vm.envAddress("ADMIN_ADDRESS");
-        string memory baseURI = vm.envString("BASE_URI");
 
         vm.startBroadcast();
 
-        CharacterToken token = new CharacterToken("Tamagotchi", "TAMAGO", baseURI, admin);
+        CharacterToken token = new CharacterToken("Seedlings", "SEED", admin);
         CharacterClaim claim = new CharacterClaim(address(token), admin);
 
         if (token.hasRole(token.getRoleAdmin(token.MINTER_ROLE()), address(this))) {

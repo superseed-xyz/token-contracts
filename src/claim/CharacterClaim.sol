@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.24;
 
-import { MerkleProof } from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 interface ICharacterToken {
-    function mintTo(address to) external returns (uint256);
+    function mintToWithURI(address to, string calldata tokenURI_) external returns (uint256);
 }
 
 contract CharacterClaim is AccessControl {
@@ -34,12 +34,12 @@ contract CharacterClaim is AccessControl {
         return MerkleProof.verifyCalldata(proof, merkleRoot, leaf);
     }
 
-    function claim(bytes32[] calldata proof, bytes32 leaf) external {
+    function claim(bytes32[] calldata proof, bytes32 leaf, string calldata tokenURI_) external {
         require(!hasClaimed[msg.sender], "Already claimed");
         require(MerkleProof.verifyCalldata(proof, merkleRoot, leaf), "Invalid proof");
 
         hasClaimed[msg.sender] = true;
-        uint256 tokenId = token.mintTo(msg.sender);
+        uint256 tokenId = token.mintToWithURI(msg.sender, tokenURI_);
         emit Claimed(msg.sender, tokenId);
     }
 }
