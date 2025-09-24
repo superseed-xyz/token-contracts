@@ -3,8 +3,8 @@ pragma solidity >=0.8.28 <0.9.0;
 
 import { console, Script } from "forge-std/src/Script.sol";
 
-import { CharacterToken } from "../src/token/CharacterToken.sol";
-import {CharacterMinter} from "src/claim/CharacterMinter.sol";
+import { CharacterToken } from "../src/character/CharacterToken.sol";
+import { CharacterMinter } from "src/character/CharacterMinter.sol";
 
 contract Deploy is Script {
     function run() public {
