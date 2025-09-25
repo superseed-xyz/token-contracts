@@ -37,7 +37,14 @@ contract CharacterMinter is AccessControl {
         _setSigner(newSigner);
     }
 
-    function mintWithSignedCid(string calldata cid, bytes calldata signature) external returns (uint256 tokenId) {        // Replay protection: mark CID as used
+    function mintWithSignedCid(
+        string calldata cid,
+        bytes calldata signature
+    )
+        external
+        validateUser
+        returns (uint256 tokenId)
+    {
         address recipient = msg.sender;
         bytes32 cidKey = keccak256(abi.encodePacked(cid));
 
