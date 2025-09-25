@@ -47,18 +47,16 @@ contract CharacterMinterTest is Test {
         return string(abi.encodePacked("0x", str));
     }
 
-    function signCidRecipientNonce(string memory cid, address recipient, string memory nonce)
+    function signCidRecipientNonce(
+        string memory cid,
+        address recipient,
+        string memory nonce
+    )
         internal
         view
         returns (bytes memory sig)
     {
-        bytes memory message = bytes(
-            string.concat(
-                "CID:", cid,
-                ";RECIPIENT:", toLowerHex(recipient),
-                ";NONCE:", nonce
-            )
-        );
+        bytes memory message = bytes(string.concat("CID:", cid, ";RECIPIENT:", toLowerHex(recipient), ";NONCE:", nonce));
         bytes32 ethHash = MessageHashUtils.toEthSignedMessageHash(message);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(backendPk, ethHash);
         sig = abi.encodePacked(r, s, v);
@@ -81,13 +79,7 @@ contract CharacterMinterTest is Test {
         string memory nonce = "n2";
 
         // Sign with wrong key
-        bytes memory message = bytes(
-            string.concat(
-                "CID:", cid,
-                ";RECIPIENT:", toLowerHex(alice),
-                ";NONCE:", nonce
-            )
-        );
+        bytes memory message = bytes(string.concat("CID:", cid, ";RECIPIENT:", toLowerHex(alice), ";NONCE:", nonce));
         bytes32 ethHash = MessageHashUtils.toEthSignedMessageHash(message);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(uint256(0xB0B), ethHash);
         bytes memory badSig = abi.encodePacked(r, s, v);

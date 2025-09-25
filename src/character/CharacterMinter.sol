@@ -1,88 +1,72 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ICharacterToken} from "./CharacterToken.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { ICharacterToken } from "./CharacterToken.sol";
 
 contract CharacterMinter is AccessControl {
-	address public signer;
-	ICharacterToken public immutable token;
+    address public signer;
+    ICharacterToken public immutable token;
 
-	event SignerUpdated(address indexed signer);
-	event CharacterMinted(address indexed to, uint256 tokenId, string metadataUri);
+    event SignerUpdated(address indexed previous, address indexed current);
+    event CharacterMinted(address indexed to, uint256 tokenId, string metadataUri);
 
-	error InvalidSignature();
-	error AlreadyUsed();
-	error ZeroAddress();
+    error InvalidSignature();
+    error AlreadyUsed();
+    error UserAlreadyMinted();
+    error ZeroAddress();
 
-	mapping(address => mapping(bytes32 => bool)) private _usedNonces;
+    mapping(bytes32 => bool) private usedCids;
+    mapping(address => bool) private walletMintStatus;
 
-	constructor(address token_, address admin_, address signer_) {
-		if (token_ == address(0) || admin_ == address(0) || signer_ == address(0)) revert ZeroAddress();
-		_grantRole(DEFAULT_ADMIN_ROLE, admin_);
-		signer = signer_;
-		token = ICharacterToken(token_);
-		emit SignerUpdated(signer_);
-	}
+    modifier validateUser() {
+        if (walletMintStatus[msg.sender]) revert UserAlreadyMinted();
+        _;
+    }
 
-	function setSigner(address newSigner) external onlyRole(DEFAULT_ADMIN_ROLE) {
-		if (newSigner == address(0)) revert ZeroAddress();
-		signer = newSigner;
-		emit SignerUpdated(newSigner);
-	}
+    constructor(address token_, address admin_, address signer_) {
+        if (token_ == address(0) || admin_ == address(0)) revert ZeroAddress();
+        token = ICharacterToken(token_);
+        _grantRole(DEFAULT_ADMIN_ROLE, admin_);
+        _setSigner(signer_);
+    }
 
-	// New mint function that rebuilds and verifies the signed message on-chain.
-	// The backend signs: `CID:<cid>;RECIPIENT:<recipient>;NONCE:<nonce>`
-	function mintWithSignedCid(
-		string calldata cid,
-		address recipient,
-		string calldata nonce,
-		bytes calldata signature
-	) external returns (uint256 tokenId) {
-		if (recipient == address(0)) revert ZeroAddress();
+    function setSigner(address newSigner) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _setSigner(newSigner);
+    }
 
-		// Replay protection: mark nonce as used per recipient
-		bytes32 nonceKey = keccak256(abi.encodePacked(nonce));
-		if (_usedNonces[recipient][nonceKey]) revert AlreadyUsed();
-		_usedNonces[recipient][nonceKey] = true;
+    function mintWithSignedCid(string calldata cid, bytes calldata signature) external returns (uint256 tokenId) {        // Replay protection: mark CID as used
+        address recipient = msg.sender;
+        bytes32 cidKey = keccak256(abi.encodePacked(cid));
 
-		// Rebuild the exact message
-		bytes memory message = bytes(
-			string.concat(
-				"CID:", cid,
-				";RECIPIENT:", _toChecksumHex(recipient),
-				";NONCE:", nonce
-			)
-		);
+        if (usedCids[cidKey]) revert AlreadyUsed();
 
-		// Standard Ethereum signed message prefix
-		bytes32 digest = MessageHashUtils.toEthSignedMessageHash(message);
+        _validateSignature(cid, signature);
 
-		address recovered = ECDSA.recover(digest, signature);
-		if (recovered != signer) revert InvalidSignature();
+        // Mark as minted
+        walletMintStatus[recipient] = true;
+        usedCids[cidKey] = true;
 
-		// Mint using full ipfs URI
-		string memory metadataUri = string.concat("ipfs://", cid);
-		tokenId = token.mintToWithURI(recipient, metadataUri);
-		emit CharacterMinted(recipient, tokenId, metadataUri);
-	}
+        // Mint using full ipfs URI
+        string memory metadataUri = string.concat("ipfs://", cid);
+        tokenId = token.mintToWithURI(recipient, metadataUri);
 
-	// Helpers
+        emit CharacterMinted(recipient, tokenId, metadataUri);
+        return tokenId;
+    }
 
-	function _toChecksumHex(address account) private pure returns (string memory) {
-		// Lowercase hex without 0x
-		bytes20 data = bytes20(account);
-		bytes memory str = new bytes(40);
-		for (uint256 i = 0; i < 20; i++) {
-			uint8 b = uint8(data[i]);
-			str[2 * i] = _HEX_SYMBOLS[b >> 4];
-			str[2 * i + 1] = _HEX_SYMBOLS[b & 0x0f];
-		}
-		// Add 0x prefix and return
-		return string(abi.encodePacked("0x", str));
-	}
+    // Private fns
+    function _setSigner(address newSigner) private {
+        if (newSigner == address(0)) revert ZeroAddress();
+        emit SignerUpdated(signer, newSigner);
+        signer = newSigner;
+    }
 
-	bytes16 private constant _HEX_SYMBOLS = "0123456789abcdef";
+    function _validateSignature(string calldata cid, bytes calldata signature) private view {
+        bytes32 digest = MessageHashUtils.toEthSignedMessageHash(bytes(cid));
+        address _signer = ECDSA.recover(digest, signature);
+        if (_signer != signer) revert InvalidSignature();
+    }
 }
