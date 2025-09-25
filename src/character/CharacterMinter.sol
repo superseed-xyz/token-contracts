@@ -3,10 +3,11 @@ pragma solidity ^0.8.28;
 
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 import { ICharacterToken } from "./CharacterToken.sol";
 
-contract CharacterMinter is AccessControl {
+contract CharacterMinter is Ownable, Pausable {
     address public signer;
     ICharacterToken public immutable token;
 
@@ -26,14 +27,13 @@ contract CharacterMinter is AccessControl {
         _;
     }
 
-    constructor(address token_, address admin_, address signer_) {
-        if (token_ == address(0) || admin_ == address(0)) revert ZeroAddress();
+    constructor(address token_, address admin_, address signer_) Ownable(admin_) {
+        if (token_ == address(0)) revert ZeroAddress();
         token = ICharacterToken(token_);
-        _grantRole(DEFAULT_ADMIN_ROLE, admin_);
         _setSigner(signer_);
     }
 
-    function setSigner(address newSigner) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setSigner(address newSigner) external onlyOwner {
         _setSigner(newSigner);
     }
 
@@ -42,6 +42,7 @@ contract CharacterMinter is AccessControl {
         bytes calldata signature
     )
         external
+        whenNotPaused
         validateUser
         returns (uint256 tokenId)
     {
@@ -62,6 +63,14 @@ contract CharacterMinter is AccessControl {
 
         emit CharacterMinted(recipient, tokenId, metadataUri);
         return tokenId;
+    }
+
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    function unpause() external onlyOwner {
+        _unpause();
     }
 
     // Private fns
