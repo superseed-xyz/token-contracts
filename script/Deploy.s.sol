@@ -12,10 +12,12 @@ contract Deploy is Script {
         address serverSigner = vm.envAddress("SERVER_SIGNER");
         vm.startBroadcast();
 
-        CharacterToken token = new CharacterToken("Seedlings", "SEED", admin);
-        CharacterMinter cm = new CharacterMinter(address(token), admin, serverSigner);
+		CharacterToken token = new CharacterToken("Seedlings", "SEED", admin, admin);
+		CharacterMinter cm = new CharacterMinter(address(token), admin, serverSigner);
 
-        token.transferOwnership(address(cm));
+		// Grant minter role to CharacterMinter and remove it from admin
+		token.grantRole(token.MINTER_ROLE(), address(cm));
+		token.revokeRole(token.MINTER_ROLE(), admin);
 
         vm.stopBroadcast();
 
