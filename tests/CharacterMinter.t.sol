@@ -25,16 +25,13 @@ contract CharacterMinterTest is Test {
         alice = makeAddr("Alice");
         (backendSigner, backendPk) = makeAddrAndKey("Backend");
 
-        token = new CharacterToken("Characters", "CHAR", admin, admin);
+        token = new CharacterToken("Characters", "CHAR");
 
         // deploy minter and grant MINTER_ROLE to it
         minter = new CharacterMinter(address(token), admin, backendSigner);
         minterAddr = address(minter);
 
-        vm.startPrank(admin);
-        token.grantRole(token.MINTER_ROLE(), minterAddr);
-        token.revokeRole(token.MINTER_ROLE(), admin);
-        vm.stopPrank();
+        token.setupRoles(admin, minterAddr);
     }
 
     function signCid(string memory cid) internal view returns (bytes memory sig) {

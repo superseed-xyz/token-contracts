@@ -1,0 +1,40 @@
+#!/bin/bash
+
+
+  # Token: 0x6583eD2566f1be930F73A612dF7F45F7063944d6
+  # CharacterMinter: 0x1e9e952c0A67988Ed4aD01fF97d524805e219BDa
+
+
+TOKEN_ADDRESS=0x6583eD2566f1be930F73A612dF7F45F7063944d6
+CHARACTER_MINTER_ADDRESS=0x1e9e952c0A67988Ed4aD01fF97d524805e219BDa
+EXPLORER_VERIFIER_URL=https://sepolia-explorer.superseed.xyz/api/
+# EXPLORER_VERIFIER_URL=https://explorer.superseed.xyz/api/
+TOKEN_CONSTRUCTOR_ARGS=$(cast ae "constructor(string,string)" "Seedlings" "LINGS")
+MINTER_CONSTRUCTOR_ARGS=$(cast ae "constructor(address,address,address)" $TOKEN_ADDRESS "0x7fB57d1a50CEAb0Ad3beF5625A097ADF8c2704aE" "0x08F3A82d9B521b45D16BeFE21409a0F6866a05E5")
+
+# Verify
+
+## CharacterToken
+printf "Verifying CharacterToken at address $TOKEN_ADDRESS\n"
+
+forge verify-contract \
+    $TOKEN_ADDRESS \
+    src/character/CharacterToken.sol:CharacterToken \
+    --chain-id 53302 \
+    --watch \
+    --compiler-version "v0.8.28" \
+    --constructor-args $TOKEN_CONSTRUCTOR_ARGS \
+    --verifier blockscout \
+    --verifier-url $EXPLORER_VERIFIER_URL \
+
+printf "Verifying CharacterMinter at address $CHARACTER_MINTER_ADDRESS\n"
+## Minter
+forge verify-contract \
+    $CHARACTER_MINTER_ADDRESS \
+    src/character/CharacterMinter.sol:CharacterMinter \
+    --chain-id 53302 \
+    --watch \
+    --compiler-version "v0.8.28" \
+    --constructor-args $MINTER_CONSTRUCTOR_ARGS \
+    --verifier blockscout \
+    --verifier-url $EXPLORER_VERIFIER_URL \

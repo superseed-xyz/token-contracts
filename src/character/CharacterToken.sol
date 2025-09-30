@@ -13,9 +13,14 @@ contract CharacterToken is ERC721, ERC721URIStorage, AccessControl, ICharacterTo
     uint256 private _nextTokenId = 0;
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    constructor(string memory name_, string memory symbol_, address owner_, address minter_) ERC721(name_, symbol_) {
-        _grantRole(DEFAULT_ADMIN_ROLE, owner_);
-        _grantRole(MINTER_ROLE, minter_);
+    constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_) {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
+
+    function setupRoles(address admin, address minter) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
+        _grantRole(MINTER_ROLE, minter);
+        _revokeRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     function mintToWithURI(
