@@ -1,18 +1,17 @@
 #!/bin/bash
 
+# Environment setup
+source .env
 
-  # Token: 0x6583eD2566f1be930F73A612dF7F45F7063944d6
-  # CharacterMinter: 0x1e9e952c0A67988Ed4aD01fF97d524805e219BDa
-
-
-TOKEN_ADDRESS=0x6583eD2566f1be930F73A612dF7F45F7063944d6
-CHARACTER_MINTER_ADDRESS=0x1e9e952c0A67988Ed4aD01fF97d524805e219BDa
-EXPLORER_VERIFIER_URL=https://sepolia-explorer.superseed.xyz/api/
-# EXPLORER_VERIFIER_URL=https://explorer.superseed.xyz/api/
+CHAIN_ID=5330
+TOKEN_ADDRESS=0x7AB8e62698ba1b8b17e60A9dddE5bdc66987594e
+CHARACTER_MINTER_ADDRESS=0x26855bB779D20D63348e383f314C5602aa2C94F8
+# EXPLORER_VERIFIER_URL=https://sepolia-explorer.superseed.xyz/api/
+EXPLORER_VERIFIER_URL=https://explorer.superseed.xyz/api/
 TOKEN_CONSTRUCTOR_ARGS=$(cast ae "constructor(string,string)" "Seedlings" "LINGS")
-MINTER_CONSTRUCTOR_ARGS=$(cast ae "constructor(address,address,address)" $TOKEN_ADDRESS "0x7fB57d1a50CEAb0Ad3beF5625A097ADF8c2704aE" "0x08F3A82d9B521b45D16BeFE21409a0F6866a05E5")
+MINTER_CONSTRUCTOR_ARGS=$(cast ae "constructor(address,address,address)" $TOKEN_ADDRESS $SEEDLINGS_ADMIN $SEEDLINGS_SERVER_SIGNER)
 
-# Verify
+# Verification
 
 ## CharacterToken
 printf "Verifying CharacterToken at address $TOKEN_ADDRESS\n"
@@ -20,7 +19,7 @@ printf "Verifying CharacterToken at address $TOKEN_ADDRESS\n"
 forge verify-contract \
     $TOKEN_ADDRESS \
     src/character/CharacterToken.sol:CharacterToken \
-    --chain-id 53302 \
+    --chain-id $CHAIN_ID \
     --watch \
     --compiler-version "v0.8.28" \
     --constructor-args $TOKEN_CONSTRUCTOR_ARGS \
@@ -28,11 +27,12 @@ forge verify-contract \
     --verifier-url $EXPLORER_VERIFIER_URL \
 
 printf "Verifying CharacterMinter at address $CHARACTER_MINTER_ADDRESS\n"
+
 ## Minter
 forge verify-contract \
     $CHARACTER_MINTER_ADDRESS \
     src/character/CharacterMinter.sol:CharacterMinter \
-    --chain-id 53302 \
+    --chain-id $CHAIN_ID \
     --watch \
     --compiler-version "v0.8.28" \
     --constructor-args $MINTER_CONSTRUCTOR_ARGS \
